@@ -58,7 +58,9 @@ $(document).ready(function(){
 
 	/* On a thumbnail click */
 	$('#navigation-menu ul li a').click(function(e,keepScroll){			
-
+			
+			if ( $(this).text() == "Blog" ) return;
+			
 			$('li.menuItem').removeClass('act').addClass('inact');
 			$(this).parent().addClass('act');
 			
