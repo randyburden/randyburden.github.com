@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Reader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
+
+    <div class="container text-center bg-white p-4 rounded shadow">
+        <h1 class="mb-4">Transcript Reader</h1>
+
+        <div class="mb-3">
+            <label for="speaker1" class="form-label">Choose Speaker 1 Voice:</label>
+            <select id="speaker1" class="form-select"></select>
+        </div>
+
+        <div class="mb-3">
+            <label for="speaker2" class="form-label">Choose Speaker 2 Voice:</label>
+            <select id="speaker2" class="form-select"></select>
+        </div>
+
+        <div class="mb-3">
+            <label for="speedSlider" class="form-label">Adjust Speaking Speed: <span id="speedValue">1.6x</span></label>
+            <input type="range" id="speedSlider" class="form-range" min="0.5" max="2.0" step="0.1" value="1.6">
+        </div>
+
+        <div class="mb-3">
+            <label for="transcript" class="form-label">Transcript JSON:</label>
+            <textarea id="transcript" class="form-control" rows="6"></textarea>
+        </div>
+
+        <div class="d-flex justify-content-around">
+            <button id="playPauseBtn" class="btn btn-primary">Play</button>
+            <button id="stopBtn" class="btn btn-danger">Stop</button>
+        </div>
+
+        <div id="output" class="mt-4 p-3 bg-light border rounded">
+            <p><strong>Current Speaker:</strong> <span id="currentSpeaker">None</span></p>
+            <p><strong>Current Text:</strong> <span id="currentText">None</span></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+        const speaker1Dropdown = document.getElementById('speaker1');
+        const speaker2Dropdown = document.getElementById('speaker2');
+        const transcriptTextarea = document.getElementById('transcript');
+        const playPauseButton = document.getElementById('playPauseBtn');
+        const stopButton = document.getElementById('stopBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const currentSpeakerOutput = document.getElementById('currentSpeaker');
+        const currentTextOutput = document.getElementById('currentText');
+
+        let voices = [];
+        let utteranceIndex = 0;
+        let utterances = [];
+        let isPlaying = false;
+
+        const defaultTranscript = JSON.stringify([
+            { speaker: "Bill", text: "Hi there! Welcome to Randy's Pre-Owned Vehicles. My name is Bill. How are you doing today?" },
+            { speaker: "Jenny", text: "I'm good, thanks. Just looking for a family car." },
+            { speaker: "Bill", text: "Great! I can help with that. Are you looking for a specific type of vehicle, or are you open to options?" },
+            { speaker: "Jenny", text: "I’m looking for a 4-door, 5-passenger vehicle. I’ve got a husband and two kids, one of them still in a car seat, so I need enough room for that. Also, I need a trunk that can fit a large stroller." },
+            { speaker: "Bill", text: "Got it. Any other preferences? Maybe a mileage limit?" },
+            { speaker: "Jenny", text: "Yeah, I don’t want anything with over 80,000 miles." },
+            { speaker: "Bill", text: "Understood. I have a few vehicles in mind that would be perfect for your needs. Let me show you a couple of options." },
+            { speaker: "Bill", text: "This is a 2018 Honda Accord with 65,000 miles. It’s a great family car—plenty of space in the back for a car seat and passengers. The trunk is spacious, so it should easily fit your stroller. Plus, Honda is known for its reliability." },
+            { speaker: "Bill", text: "Here’s a 2017 Toyota Camry with 72,000 miles. It also offers ample space for your family and gear, and it’s within your mileage limit. The Camry is another solid choice, especially if you’re looking for a balance of comfort and efficiency." },
+            { speaker: "Jenny", text: "They both look good. Can I test drive the Accord?" },
+            { speaker: "Bill", text: "Absolutely! Let’s take it for a spin." },
+            { speaker: "Bill", text: "So, what did you think? Does the Accord feel like the right fit for your family?" },
+            { speaker: "Jenny", text: "Yeah, it feels good. I like the space and how it handles." },
+            { speaker: "Bill", text: "Fantastic! If you’re ready, we can head inside and get started on the paperwork. We also have some financing options that could make this even more affordable." },
+            { speaker: "Jenny", text: "Sounds good. Let’s do it." },
+            { speaker: "Bill", text: "Congratulations on your new car! You’ve made a great choice. We’ll take care of the final details, and you’ll be on the road in no time. If you have any questions or need anything, just let us know. We’ll also follow up to make sure everything is going smoothly." },
+            { speaker: "Jenny", text: "Thanks, Bill. I appreciate it." },
+            { speaker: "Bill", text: "My pleasure. Drive safely, and enjoy your new ride!" }
+        ], null, 2);
+
+        transcriptTextarea.value = defaultTranscript;
+
+		function populateVoiceList() {
+			voices = speechSynthesis.getVoices().filter(x => x.lang == "en-US");
+
+			speaker1Dropdown.innerHTML = '';
+			speaker2Dropdown.innerHTML = '';
+
+			let employeeVoiceIndex = 0;
+			let customerVoiceIndex = 1;
+
+			voices.forEach((voice, i) => {
+				const option1 = document.createElement('option');
+				option1.textContent = `${voice.name} (${voice.lang})`;
+				option1.value = i;
+				speaker1Dropdown.appendChild(option1);
+
+				const option2 = document.createElement('option');
+				option2.textContent = `${voice.name} (${voice.lang})`;
+				option2.value = i;
+				speaker2Dropdown.appendChild(option2);
+
+				if (voice.name === "Microsoft Andrew Online (Natural) - English (United States)") {
+					employeeVoiceIndex = i;
+				}
+
+				if (voice.name === "Microsoft Jenny Online (Natural) - English (United States)") {
+					customerVoiceIndex = i;
+				}
+			});
+
+			speaker1Dropdown.selectedIndex = employeeVoiceIndex;
+			speaker2Dropdown.selectedIndex = customerVoiceIndex;
+		}
+
+        populateVoiceList();
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+
+        function createUtterancesFromTranscript() {
+            utterances = [];
+            utteranceIndex = 0;
+
+            const transcript = JSON.parse(transcriptTextarea.value);
+			let speaker1 = null;
+
+            transcript.forEach((line) => {
+				if (!speaker1) {
+					speaker1 = line.speaker;
+				}
+			
+				let isFirstSpeaker = false;
+				if (line.speaker === speaker1) {
+					isFirstSpeaker = true;
+				}
+			
+                const msg = new SpeechSynthesisUtterance();
+                msg.text = line.text;
+                msg.voice = isFirstSpeaker ? voices[speaker1Dropdown.value] : voices[speaker2Dropdown.value];
+                msg.volume = isFirstSpeaker ? 1 : .9;
+                msg.rate = parseFloat(speedSlider.value);
+                msg.pitch = isFirstSpeaker ? 1 : 1.4;
+                msg.lang = 'en';
+
+                msg.onend = () => {
+                    if (isPlaying) {
+                        utteranceIndex++;
+                        if (utteranceIndex < utterances.length) {
+                            speakCurrentUtterance();
+                        } else {
+                            reset();
+                        }
+                    }
+                };
+
+                utterances.push({ speaker: line.speaker, text: line.text, msg });
+            });
+        }
+
+		function speakCurrentUtterance() {
+			if (utteranceIndex < utterances.length) {
+				const currentUtterance = utterances[utteranceIndex];
+				currentSpeakerOutput.textContent = currentUtterance.speaker;
+				currentTextOutput.textContent = currentUtterance.text;
+
+				// Set the rate to the current speedSlider value
+				currentUtterance.msg.rate = parseFloat(speedSlider.value);
+				
+				speechSynthesis.speak(currentUtterance.msg);
+			}
+		}
+
+        function togglePlayPause() {
+            if (isPlaying) {
+                speechSynthesis.pause();
+                playPauseButton.textContent = 'Play';
+            } else {
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    createUtterancesFromTranscript();
+                    speakCurrentUtterance();
+                }
+                playPauseButton.textContent = 'Pause';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function stop() {
+            isPlaying = false;
+            speechSynthesis.cancel();
+            reset();
+        }
+
+        function reset() {
+            utteranceIndex = 0;
+            playPauseButton.textContent = 'Play';
+            currentSpeakerOutput.textContent = 'None';
+            currentTextOutput.textContent = 'None';
+        }
+
+		speedSlider.addEventListener('input', () => {
+			speedValue.textContent = `${speedSlider.value}x`;
+			
+			if (isPlaying && speechSynthesis.speaking) {
+				// Update the rate of the currently speaking utterance
+				speechSynthesis.pause();
+				utterances[utteranceIndex].msg.rate = parseFloat(speedSlider.value);
+				speechSynthesis.resume();
+			}
+		});
+
+        playPauseButton.addEventListener('click', togglePlayPause);
+        stopButton.addEventListener('click', stop);
+    </script>
+</body>
+</html>
