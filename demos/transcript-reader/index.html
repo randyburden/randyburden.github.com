@@ -24,6 +24,39 @@
             background: linear-gradient(180deg, rgba(27, 36, 51, 0.96), rgba(20, 27, 38, 0.96));
             box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
         }
+
+        .segment-progress-track {
+            height: 0.9rem;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .segment-progress-bar {
+            transition: width 0.25s ease;
+            background: linear-gradient(90deg, #7cc4ff 0%, #4f8cff 100%);
+        }
+
+        .segment-steps {
+            display: grid;
+            grid-template-columns: repeat(var(--step-count, 1), minmax(0, 1fr));
+            gap: 0.35rem;
+        }
+
+        .segment-step {
+            height: 0.4rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.16);
+            transition: background-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .segment-step.is-complete {
+            background: rgba(124, 196, 255, 0.65);
+        }
+
+        .segment-step.is-current {
+            background: #7cc4ff;
+            transform: scaleY(1.2);
+        }
     </style>
 </head>
 <body>
@@ -60,6 +93,17 @@
                     <button id="stopBtn" class="btn btn-danger flex-fill">Stop</button>
                 </div>
 
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center gap-3 small text-body-secondary mb-2">
+                        <span id="progressSummary">0 of 0 segments played</span>
+                        <span id="remainingSummary">0 remaining</span>
+                    </div>
+                    <div class="segment-progress-track rounded-pill" aria-hidden="true">
+                        <div id="segmentProgressBar" class="segment-progress-bar h-100 rounded-pill" style="width: 0%;"></div>
+                    </div>
+                    <div id="segmentSteps" class="segment-steps mt-2" style="--step-count: 1;" aria-label="Transcript segment progress"></div>
+                </div>
+
                 <div id="output" class="mt-4 rounded-4 border bg-dark-subtle p-3 text-body-secondary">
                     <p><strong class="text-light">Current Speaker:</strong> <span id="currentSpeaker">None</span></p>
                     <p class="mb-0"><strong class="text-light">Current Text:</strong> <span id="currentText">None</span></p>
@@ -87,6 +131,10 @@
         const speedValue = document.getElementById('speedValue');
         const currentSpeakerOutput = document.getElementById('currentSpeaker');
         const currentTextOutput = document.getElementById('currentText');
+        const progressSummary = document.getElementById('progressSummary');
+        const remainingSummary = document.getElementById('remainingSummary');
+        const segmentProgressBar = document.getElementById('segmentProgressBar');
+        const segmentSteps = document.getElementById('segmentSteps');
 
         let voices = [];
         let utteranceIndex = 0;
@@ -180,15 +228,50 @@
                 msg.onend = () => {
                     if (isPlaying) {
                         utteranceIndex++;
+                        updateProgress();
                         if (utteranceIndex < utterances.length) {
                             speakCurrentUtterance();
                         } else {
-                            reset();
+                            reset(false);
                         }
                     }
                 };
 
                 utterances.push({ speaker: line.speaker, text: line.text, msg });
+            });
+
+            renderSegmentSteps();
+            updateProgress();
+        }
+
+        function renderSegmentSteps() {
+            segmentSteps.innerHTML = '';
+
+            const totalSegments = utterances.length;
+            segmentSteps.style.setProperty('--step-count', Math.max(totalSegments, 1));
+
+            utterances.forEach((_, index) => {
+                const step = document.createElement('span');
+                step.className = 'segment-step';
+                step.dataset.index = index;
+                step.title = `Segment ${index + 1}`;
+                segmentSteps.appendChild(step);
+            });
+        }
+
+        function updateProgress() {
+            const totalSegments = utterances.length;
+            const completedSegments = Math.min(utteranceIndex, totalSegments);
+            const remainingSegments = Math.max(totalSegments - completedSegments, 0);
+            const progressPercent = totalSegments === 0 ? 0 : (completedSegments / totalSegments) * 100;
+
+            progressSummary.textContent = `${completedSegments} of ${totalSegments} segments played`;
+            remainingSummary.textContent = `${remainingSegments} remaining`;
+            segmentProgressBar.style.width = `${progressPercent}%`;
+
+            Array.from(segmentSteps.children).forEach((step, index) => {
+                step.classList.toggle('is-complete', index < completedSegments);
+                step.classList.toggle('is-current', isPlaying && index === utteranceIndex && utteranceIndex < totalSegments);
             });
         }
 
@@ -197,6 +280,7 @@
 				const currentUtterance = utterances[utteranceIndex];
 				currentSpeakerOutput.textContent = currentUtterance.speaker;
 				currentTextOutput.textContent = currentUtterance.text;
+                updateProgress();
 
 				// Set the rate to the current speedSlider value
 				currentUtterance.msg.rate = parseFloat(speedSlider.value);
@@ -212,6 +296,7 @@
             } else {
                 if (speechSynthesis.paused) {
                     speechSynthesis.resume();
+                    updateProgress();
                 } else {
                     createUtterancesFromTranscript();
                     speakCurrentUtterance();
@@ -219,19 +304,24 @@
                 playPauseButton.textContent = 'Pause';
             }
             isPlaying = !isPlaying;
+            updateProgress();
         }
 
         function stop() {
             isPlaying = false;
             speechSynthesis.cancel();
-            reset();
+            reset(true);
         }
 
-        function reset() {
-            utteranceIndex = 0;
+        function reset(clearProgress = false) {
+            isPlaying = false;
+            if (clearProgress) {
+                utteranceIndex = 0;
+            }
             playPauseButton.textContent = 'Play';
             currentSpeakerOutput.textContent = 'None';
             currentTextOutput.textContent = 'None';
+            updateProgress();
         }
 
 		speedSlider.addEventListener('input', () => {
@@ -248,6 +338,8 @@
         playPauseButton.addEventListener('click', togglePlayPause);
         stopButton.addEventListener('click', stop);
         document.getElementById('current-year').textContent = new Date().getFullYear();
+        renderSegmentSteps();
+        updateProgress();
     </script>
 </body>
 </html>
