@@ -1,0 +1,279 @@
+@charset "UTF-8";
+
+:root {
+    --bs-body-font-family: "Source Sans 3", sans-serif;
+    --mustachio-serif: "Libre Baskerville", serif;
+    --mustachio-bg: #0d1117;
+    --mustachio-panel: #161d2a;
+    --mustachio-panel-2: #1b2433;
+    --mustachio-border: rgba(255, 255, 255, 0.1);
+    --mustachio-accent: #7cc4ff;
+    --mustachio-pink: #f5a3b7;
+    --mustachio-green: #9ee6a8;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(circle at top left, rgba(245, 163, 183, 0.14), transparent 25%),
+        radial-gradient(circle at top right, rgba(124, 196, 255, 0.13), transparent 28%),
+        linear-gradient(180deg, #0b1016 0%, var(--mustachio-bg) 36%, #0e1420 100%);
+}
+
+main {
+    flex: 1;
+}
+
+a {
+    color: var(--mustachio-accent);
+}
+
+a:hover,
+a:focus {
+    color: #a9d9ff;
+}
+
+h1,
+h2 {
+    font-family: var(--mustachio-serif);
+}
+
+.demo-shell,
+.control-card,
+.preview-card {
+    background: linear-gradient(180deg, rgba(27, 36, 51, 0.96), rgba(20, 27, 38, 0.96));
+    border-color: var(--mustachio-border) !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.demo-shell {
+    max-width: 78rem;
+}
+
+.privacy-note {
+    color: #d8e3ef;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--mustachio-border) !important;
+}
+
+.progress {
+    height: 0.95rem;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-bar {
+    color: #06111c;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--mustachio-accent), var(--mustachio-green));
+    transition: width 240ms ease;
+}
+
+.sample-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.sample-title-button {
+    appearance: none;
+    display: block;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    background: transparent;
+    border: 0;
+}
+
+.sample-button {
+    padding: 0.45rem;
+    color: #dce7f3;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--mustachio-border);
+    border-radius: 0.75rem;
+    transition: border-color 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+
+.sample-button img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 0.55rem;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sample-button span {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.sample-credit {
+    line-height: 1.35;
+}
+
+.sample-button:hover:not(:disabled),
+.sample-button:focus-visible:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(124, 196, 255, 0.5);
+    background: rgba(124, 196, 255, 0.1);
+}
+
+.sample-button:disabled,
+.drop-zone.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.drop-zone {
+    cursor: pointer;
+    background:
+        linear-gradient(135deg, rgba(124, 196, 255, 0.08), rgba(245, 163, 183, 0.06));
+    border-style: dashed !important;
+    border-color: rgba(124, 196, 255, 0.28) !important;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.drop-zone:hover,
+.drop-zone:focus-visible,
+.drop-zone.is-dragging {
+    transform: translateY(-1px);
+    border-color: rgba(158, 230, 168, 0.65) !important;
+    background-color: rgba(158, 230, 168, 0.08);
+    outline: 0;
+}
+
+.canvas-wrap {
+    position: relative;
+    display: grid;
+    min-height: 24rem;
+    place-items: center;
+    overflow: hidden;
+    background:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%),
+        #101823;
+    background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    background-size: 24px 24px;
+    border-color: var(--mustachio-border) !important;
+}
+
+canvas {
+    display: none;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.85rem;
+}
+
+.canvas-wrap.has-image {
+    min-height: auto;
+}
+
+.canvas-wrap.has-image canvas {
+    display: block;
+}
+
+.canvas-wrap.has-image .empty-state {
+    display: none;
+}
+
+.preview-actions {
+    padding-top: 0.25rem;
+}
+
+.style-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.style-button {
+    min-height: 2.75rem;
+    padding: 0.45rem 0.55rem;
+    color: #dce7f3;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--mustachio-border);
+    border-radius: 0.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    transition: border-color 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+
+.style-button:hover:not(:disabled),
+.style-button:focus-visible:not(:disabled),
+.style-button.is-active {
+    border-color: rgba(124, 196, 255, 0.58);
+    background: rgba(124, 196, 255, 0.13);
+}
+
+.style-button.is-active {
+    color: #ffffff;
+}
+
+.style-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.btn:focus-visible,
+.sample-button:focus-visible,
+.style-button:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(124, 196, 255, 0.22);
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+}
+
+.btn-primary {
+    --bs-btn-bg: #2f6ea5;
+    --bs-btn-border-color: #2f6ea5;
+    --bs-btn-hover-bg: #3b7fbb;
+    --bs-btn-hover-border-color: #3b7fbb;
+    --bs-btn-active-bg: #285f8d;
+    --bs-btn-active-border-color: #285f8d;
+}
+
+.btn-success {
+    --bs-btn-bg: #3c8b5a;
+    --bs-btn-border-color: #3c8b5a;
+    --bs-btn-hover-bg: #4ba86e;
+    --bs-btn-hover-border-color: #4ba86e;
+}
+
+.btn-outline-light {
+    --bs-btn-hover-color: #0d1117;
+}
+
+footer {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 575.98px) {
+    .sample-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .style-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sample-button {
+        padding: 0.35rem;
+    }
+
+    .sample-button span {
+        font-size: 0.8rem;
+    }
+
+    .canvas-wrap {
+        min-height: 18rem;
+    }
+}
